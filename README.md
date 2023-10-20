@@ -15,89 +15,106 @@ We used java version 17 to write, compile and run the program, and used ant to c
 ### Folder structure
 
 ```bash
-├── src                         # source code dir
-│   ├── benchmark               # test package
-│   │   ├── TestDownload.java
-│   │   └── TestSearch.java
-│   ├── cis                     # cis package
-│   │   ├── CisMain.java
-│   │   ├── ClientHandler.java
-│   │   └── PeerClientEntity.java
-│   └── peer                    # peer package
-│       ├── PeerClient.java
-│       ├── PeerMain.java
-│       └── PeerServer.java
-├── bin                        # executable binary dir
-│   ├── app.config
-│   ├── src
-│   │   ├── cis
-│   │   │   ├── CisMain.class
-│   │   │   ├── ClientHandler.class
-│   │   │   └── PeerClientEntity.class
-│   │   └── peer
-│   │       ├── PeerClient.class
-│   │       ├── PeerMain.class
-│   │       └── PeerServer.class
-│   └── zl.txt
-├── app.config                  # app config
-├── 1_node_10k_KB_strong_scale.log
-├── 1_node_1K_MB_strong_scale.log
-├── PA1.pdf                     # doc
 ├── README.md
-├── build.xml                   # ant build instr
-├── data-plot.py                # test result plotter
-├── files-generator.py          # data generator
-├── weakscale.log
-└── weakscale_node1.log
+├── app.config
+├── bin
+│   ├── app.config
+│   ├── files
+│   │   ├── 10KB_000000_peer1.txt
+│   │   ├── 10KB_000001_peer1.txt
+│   │   ├── 10KB_000002_peer1.txt
+│   │   ├── 10KB_000003_peer1.txt
+│   │   ├── 10KB_000004_peer1.txt
+│   │   ├── 10KB_000005_peer1.txt
+│   │   ├── 10KB_000006_peer1.txt
+│   │   ├── 10KB_000007_peer1.txt
+│   │   ├── 10KB_000008_peer1.txt
+│   │   └── 10KB_000009_peer1.txt
+│   └── src
+│       ├── benchmark
+│       │   ├── TestDownload.class
+│       │   └── TestSearch.class
+│       └── peer
+│           ├── PeerMain.class
+│           ├── client
+│           │   └── PeerClient.class
+│           ├── entity
+│           │   ├── AddressEntity.class
+│           │   ├── FileHolderEntity.class
+│           │   ├── PeerEntity.class
+│           │   └── SearchMessageEntity.class
+│           └── server
+│               ├── PeerClientHandler.class
+│               └── PeerServer.class
+├── build.xml
+├── files-generator.py
+├── output
+│   └── CIS
+│       ├── Experiment-1
+│       │   └── output-CIS-T1.log
+│       └── Experiment-2
+│           ├── output-CIS-T2-P1.log
+│           ├── output-CIS-T2-P2.log
+│           ├── output-CIS-T2-P3.log
+│           ├── output-CIS-T2-P4.log
+│           ├── output-CIS-T2-P5.log
+│           ├── output-CIS-T2-P6.log
+│           ├── output-CIS-T2-P7.log
+│           ├── output-CIS-T2-P8.log
+│           └── output-CIS-T2-P9.log
+└── src
+    ├── benchmark
+    │   ├── TestDownload.java
+    │   └── TestSearch.java
+    └── peer
+        ├── PeerMain.java
+        ├── client
+        │   └── PeerClient.java
+        ├── entity
+        │   ├── AddressEntity.java
+        │   ├── FileHolderEntity.java
+        │   ├── PeerEntity.java
+        │   └── SearchMessageEntity.java
+        └── server
+            ├── PeerClientHandler.java
+            └── PeerServer.java
 ```
 
-### Running the application
+### Deployment steps
 
-Go to source directory and run ant command to generate all java bytecode for peer, cis and testing in bin folder.
-```bash
-ant
-``` 
+1. Copy the source directory to where you want to deploy the application
 
-Copy the contents in bin folder to desired location.
-```bash
-scp -r bin/ username@host_address:/path/to/copy
-```
-Login to the VM and go to the copied location.
+2. Go to source directory and run ant command to generate all java bytecode for peer and testing in bin folder.
+    ```bash
+    ant
+    ``` 
 
-Create folder named files. This is where peers store their shared files.
-```bash
-mkdir files
-``` 
+3. Generate files with the following script.
+    ```bash
+    python files-generator.py <peerID>
+    ``` 
+    The files will be generated in ```bin/files/```.
 
-You can generate files with the following script.
-```bash
-python files-generator.py <peerID>
-``` 
-
-To start peer application:
-```bash
-java src.peer.PeerMain
-``` 
-To start central indexing server app.
-```bash
-java src.cis.CisMain
-``` 
-To run the test.
-```bash
-java src.benchmark.TestSearch
-# or
-java src.benchmark.TestDownload
-``` 
-
-
-<img width="1136" alt="Screenshot 2023-09-26 at 10 51 43 PM" src="https://github.com/datasys-classrooms/cs550-fall2023-pa1-nbv/assets/145067050/9162f4b6-e2b3-4420-baf6-9a7993cac243">
-
-
-**Registration:**
-<img width="1138" alt="Screenshot 2023-09-26 at 4 44 31 PM" src="https://github.com/datasys-classrooms/cs550-fall2023-pa1-nbv/assets/145067050/daace1d4-3ce4-4fa7-9d3f-87c8254d45e0">
-
-**Weak Scaling Scalability Study**
-![image](https://github.com/datasys-classrooms/cs550-fall2023-pa1-nbv/assets/145067050/0a4412e0-9b5a-48b1-b1a6-8db3bd58539d)
-
-**Strong Scaling Scalability Study**
-<img width="970" alt="Screenshot 2023-09-28 at 10 50 26 PM" src="https://github.com/datasys-classrooms/cs550-fall2023-pa1-nbv/assets/145067050/29f87772-37f8-4152-8921-3dc1903de605">
+4. Go to bin folder:
+    ```bash
+    cd bin
+    ``` 
+5. Make configurations in ```app.config```:
+    ```bash
+    id=peer1                    # id of the current peer
+    ip=localhost                # ip address of the current peer
+    port=6001                   # port of the current peer
+    peers=peer2:localhost:6002,peer4:localhost:6004  # peers
+    ttl=3                       # ttl
+    repl=peer2,peer3            # replication locations (must be neighbor)
+    ``` 
+6. To start central indexing server app.
+    ```bash
+    java src.peer.PeerMain
+    ``` 
+7. (Optional) To run the test.
+    ```bash
+    java src.benchmark.TestSearch
+    # or
+    java src.benchmark.TestDownload
+    ``` 
