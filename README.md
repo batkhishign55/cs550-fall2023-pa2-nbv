@@ -51,7 +51,6 @@ We used java version 17 to write, compile and run the program, and used ant to c
 └── weakscale_node1.log
 ```
 
-In app.config file, set the Central indexing server's address, so that peers can register and search files.
 ### Running the application
 
 Go to source directory and run ant command to generate all java bytecode for peer, cis and testing in bin folder.

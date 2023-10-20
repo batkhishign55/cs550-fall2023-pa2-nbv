@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 
 import src.peer.PeerMain;
 import src.peer.entity.PeerEntity;
@@ -94,20 +93,17 @@ public class PeerClientHandler extends Thread {
         }
 
         // check if search msg is already received
-        ArrayList<SearchMessageEntity> msgs = peerMain.getMsgs();
-        for (SearchMessageEntity msg : msgs) {
-            if (msgId.equals(msg.getMsgId())) {
-                // System.out.println(String.format("[Server]: Already searched here: %s",
-                // msgId));
-                return;
-            }
+        try {
+            peerMain.findMsg(msgId);
+            return;
+        } catch (Exception e) {
         }
 
         // extracting peerId from msgId
         System.out.println(
                 String.format("[Server]: Incoming search request:\n\t%s, %s, %d", msgId, fileName, ttl));
 
-        PeerEntity upstreamPeer = this.findPeer(upstreamPeerId);
+        PeerEntity upstreamPeer = peerMain.findPeer(upstreamPeerId);
         // register new msg
         SearchMessageEntity msg = new SearchMessageEntity(msgId);
         msg.setUpstreamId(upstreamPeerId);
@@ -209,7 +205,7 @@ public class PeerClientHandler extends Thread {
             out.close();
         }
 
-        SearchMessageEntity msg = this.findMsg(msgId);
+        SearchMessageEntity msg = peerMain.findMsg(msgId);
 
         // if the message is originated here
         if (msg.getIsOrigin()) {
@@ -220,24 +216,6 @@ public class PeerClientHandler extends Thread {
 
         System.out.println(String.format("[Server]: Forwarding search result: %s.", msg.getMsgId()));
         this.sendSearchResult(msg, peerIp, peerPort);
-    }
-
-    private PeerEntity findPeer(String peerId) throws Exception {
-        for (PeerEntity peer : this.peerMain.getPeers()) {
-            if (peerId.equals(peer.getId())) {
-                return peer;
-            }
-        }
-        throw new Exception("peer not found!");
-    }
-
-    private SearchMessageEntity findMsg(String msgId) throws Exception {
-        for (SearchMessageEntity msg : peerMain.getMsgs()) {
-            if (msgId.equals(msg.getMsgId())) {
-                return msg;
-            }
-        }
-        throw new Exception("msg not found!");
     }
 
     private void handleObtain() throws IOException {

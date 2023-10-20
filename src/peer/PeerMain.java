@@ -27,8 +27,23 @@ public class PeerMain {
         }
     }
 
+    public SearchMessageEntity findMsg(String msgId) throws Exception {
+        synchronized (lock) {
+            for (SearchMessageEntity msg : this.msgs) {
+                if (msgId.equals(msg.getMsgId())) {
+                    return msg;
+                }
+            }
+            throw new Exception("msg not found!");
+        }
+    }
+
     public void addMsg(SearchMessageEntity msg) {
         synchronized (lock) {
+            // clear the messages if it's over 1k
+            if (this.msgs.size()> 1000) {
+                this.msgs = new ArrayList<>();
+            }
             this.msgs.add(msg);
         }
     }
