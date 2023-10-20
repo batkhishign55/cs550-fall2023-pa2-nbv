@@ -2,10 +2,13 @@ package src.peer.client;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.UUID;
 
@@ -34,7 +37,7 @@ public class PeerClient extends Thread {
         while (true) {
             try {
                 System.out.println(
-                        "[Client]: What do you want to do?\n\t[0] - Search a file\n\t[1] - Obtain a file");
+                        "[Client]: What do you want to do?\n\t[0] - Search a file\n\t[1] - Obtain a file\n\t[2] - Replicate");
                 String inp = input.nextLine();
                 switch (inp) {
                     case "0":
@@ -42,6 +45,9 @@ public class PeerClient extends Thread {
                         break;
                     case "1":
                         obtain();
+                        break;
+                    case "2":
+                        replicate();
                         break;
                     default:
                         System.out.println("[Client]: Unknown option!");
@@ -144,5 +150,48 @@ public class PeerClient extends Thread {
             }
         }
         System.out.println("[Client]: Download successful!");
+    }
+
+    private void replicate() throws Exception {
+        String repls = peerMain.getProp().getProperty("repl");
+        String[] peerIds = repls.split(",");
+
+        for (String peerId : peerIds) {
+
+            PeerEntity peer = peerMain.findPeer(peerId);
+            System.out.println(
+                    String.format("[Client]:Replicating in %s %s:%d", peer.getId(), peer.getIp(), peer.getPort()));
+            // establish a connection
+            socket = new Socket(peer.getIp(), peer.getPort());
+
+            in = new DataInputStream(socket.getInputStream());
+            out = new DataOutputStream(socket.getOutputStream());
+
+            out.writeUTF("replicate");
+
+            // search the file in local directory
+            File folder = new File("./files");
+            File[] listOfFiles = folder.listFiles();
+
+            for (File file : listOfFiles) {
+                out.writeUTF(file.getName());
+                byte[] bytes = Files.readAllBytes(Paths.get("./files/", file.getName()));
+                out.writeUTF(String.valueOf(bytes.length));
+                out.write(bytes);
+                out.flush();
+            }
+
+            out.writeUTF("end");
+
+            socket.close();
+            if (in != null) {
+                in.close();
+            }
+            if (out != null) {
+                out.close();
+            }
+            System.out.println("[Client]:Replication sucessful");
+
+        }
     }
 }

@@ -89,6 +89,17 @@ public class PeerMain {
         }
     }
 
+    public PeerEntity findPeer(String peerId) throws Exception {
+        synchronized (lock) {
+            for (PeerEntity peer : this.peers) {
+                if (peer.getId().equals(peerId)) {
+                    return peer;
+                }
+            }
+            throw new Exception("Peer not found!");
+        }
+    }
+
     public Properties getProp() {
         synchronized (lock) {
             return this.prop;

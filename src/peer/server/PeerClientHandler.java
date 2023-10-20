@@ -3,6 +3,7 @@ package src.peer.server;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -45,6 +46,9 @@ public class PeerClientHandler extends Thread {
                     break;
                 case "obtain":
                     this.handleObtain();
+                    break;
+                case "replicate":
+                    this.handleReplicate();
                     break;
 
                 default:
@@ -254,5 +258,28 @@ public class PeerClientHandler extends Thread {
         if (out != null) {
             out.close();
         }
+    }
+
+    private void handleReplicate() throws IOException {
+
+        // read file to search
+        System.out.println("[Server]: Incoming replication request.");
+
+        String msg = in.readUTF();
+        while (!msg.equals("end")) {
+
+            int byteSize = Integer.parseInt(in.readUTF());
+            int received = 0;
+            byte[] buffer = new byte[1024];
+            try (FileOutputStream fos = new FileOutputStream(String.format("./files/%s", msg))) {
+                while (byteSize > received) {
+                    fos.write(buffer, 0, in.read(buffer));
+                    received += 1024;
+                }
+            }
+            msg = in.readUTF();
+        }
+        System.out.println("[Client]: Replication successful!");
+
     }
 }
