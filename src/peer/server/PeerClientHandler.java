@@ -211,11 +211,14 @@ public class PeerClientHandler extends Thread {
         if (msg.getIsOrigin()) {
             System.out.println(String.format("[Server]: %s found in: %s:%s", fileName, peerIp, peerPort));
             peerMain.addHolder(fileName, peerIp, Integer.valueOf(peerPort));
-            return;
+            if (!msg.getDidRespond()) {
+                msg.setDidRespond(true);
+                peerMain.incrementTestReceived();
+            }
+        } else {
+            System.out.println(String.format("[Server]: Forwarding search result: %s.", msg.getMsgId()));
+            this.sendSearchResult(msg, peerIp, peerPort);
         }
-
-        System.out.println(String.format("[Server]: Forwarding search result: %s.", msg.getMsgId()));
-        this.sendSearchResult(msg, peerIp, peerPort);
     }
 
     private void handleObtain() throws IOException {

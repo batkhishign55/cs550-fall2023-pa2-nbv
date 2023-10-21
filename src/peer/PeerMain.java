@@ -20,6 +20,38 @@ public class PeerMain {
     ArrayList<PeerEntity> peers = new ArrayList<>();
     ArrayList<FileHolderEntity> holders = new ArrayList<>();
     Properties prop;
+    static int testSize = 1000;
+    int testReceived;
+    long startTime;
+
+    public int getTestSize() {
+        return PeerMain.testSize;
+    }
+
+    public void incrementTestReceived() {
+        synchronized (lock) {
+            this.testReceived += 1;
+            if (this.testReceived == PeerMain.testSize) {
+                this.testReceived = 0;
+            }
+        }
+    }
+
+    public void startTest() {
+        synchronized (lock) {
+            this.testReceived = 0;
+            startTime = System.nanoTime();
+        }
+    }
+
+    public void endTest() {
+        synchronized (lock) {
+            this.testReceived = 0;
+            long elapsedTimeMillis = (System.nanoTime() - startTime) / 1000000;
+
+            System.out.println("Total Time Taken: " + elapsedTimeMillis + "ms");
+        }
+    }
 
     public ArrayList<SearchMessageEntity> getMsgs() {
         synchronized (lock) {
@@ -41,7 +73,7 @@ public class PeerMain {
     public void addMsg(SearchMessageEntity msg) {
         synchronized (lock) {
             // clear the messages if it's over 1k
-            if (this.msgs.size()> 1000) {
+            if (this.msgs.size() > 1000) {
                 this.msgs = new ArrayList<>();
             }
             this.msgs.add(msg);

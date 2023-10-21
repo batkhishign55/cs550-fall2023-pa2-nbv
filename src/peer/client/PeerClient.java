@@ -9,6 +9,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.UUID;
 
@@ -25,6 +28,7 @@ public class PeerClient extends Thread {
     private DataInputStream in = null;
     private Scanner input = null;
     private PeerMain peerMain;
+    List<Long> timeList = new ArrayList<>();
 
     public PeerClient(PeerMain peerMain) {
         this.peerMain = peerMain;
@@ -32,6 +36,15 @@ public class PeerClient extends Thread {
 
     @Override
     public void run() {
+
+        int idx = 0;
+        for (int i = 0; i < 3; i++) {
+            String peerId = String.format("peer%d", i + 1);
+            if (!peerMain.getProp().getProperty("id").equals(peerId)) {
+                this.peers[idx] = peerId;
+                idx += 1;
+            }
+        }
 
         input = new Scanner(System.in);
         while (true) {
@@ -48,6 +61,8 @@ public class PeerClient extends Thread {
                         break;
                     case "2":
                         replicate();
+                    case "3":
+                        benchmark();
                         break;
                     default:
                         System.out.println("[Client]: Unknown option!");
@@ -193,5 +208,86 @@ public class PeerClient extends Thread {
             System.out.println("[Client]:Replication sucessful");
 
         }
+    }
+
+    private void benchmark() throws UnknownHostException, IOException {
+
+        System.out.println("[Client]: Which benchmark do you want to run:\n\t[0] - Search\n\t[1] - Download");
+        this.testType = Integer.parseInt(input.nextLine());
+        System.out.println("[Client]: Small dataset or large dataset:\n\t[0] - Small\n\t[1] - Large");
+        this.fileSize = Integer.parseInt(input.nextLine());
+
+        if (this.testType == 1) {
+
+        }
+
+        peerMain.startTest();
+        // establish a connection
+        for (int i = 0; i < peerMain.getTestSize(); i++) {
+            this.sendRequest();
+        }
+        System.out.println("Time Taken Per Request: " + this.timeList);
+        peerMain.endTest();
+    }
+
+    private void sendRequest() throws UnknownHostException, IOException {
+        // record start time
+        long startTime = System.nanoTime();
+
+        Socket socket = null;
+        DataOutputStream out = null;
+
+        UUID uuid = UUID.randomUUID();
+
+        String msgId = String.format("%s:%s", peerMain.getProp().getProperty("id"), uuid.toString());
+        String fileName = getRandomFilename();
+
+        SearchMessageEntity msg = new SearchMessageEntity(msgId);
+        msg.setFileName(fileName);
+        msg.setIsOrigin(true);
+        peerMain.addMsg(msg);
+        for (PeerEntity peer : peerMain.getPeers()) {
+            System.out.println(
+                    String.format("[Client]: Searching in %s %s:%d", peer.getId(), peer.getIp(), peer.getPort()));
+
+            // establish a connection
+            socket = new Socket(peer.getIp(), peer.getPort());
+            System.out.println(String.format("[Client]: Connected to %s!", peer.getId()));
+
+            out = new DataOutputStream(socket.getOutputStream());
+
+            // send request type
+            out.writeUTF("search");
+            // send msgId
+            out.writeUTF(msgId);
+            // send ttl
+            int ttl = Integer.parseInt(peerMain.getProp().getProperty("ttl"));
+            out.writeUTF(String.valueOf(ttl - 1));
+            // send fileName
+            out.writeUTF(fileName);
+            // send current peerId
+            out.writeUTF(peerMain.getProp().getProperty("id"));
+        }
+
+        // calculating the time in milliseconds
+        long elapsedTimeMillis = (System.nanoTime() - startTime) / 1000000;
+        this.timeList.add(elapsedTimeMillis);
+
+    }
+
+    private static final String[] sizes = { "10KB", "100MB" };
+    private static final int[] sizeLimits = { 10, 10 };
+    private static final Random random = new Random();
+    private int testType;
+    private int fileSize;
+    private String[] peers = new String[2];
+
+    private String getRandomFilename() {
+        String size = sizes[this.fileSize];
+        int limit = sizeLimits[this.fileSize];
+        String value = String.format("%06d", random.nextInt(limit));
+        String extension = ".txt";
+        String peer = this.peers[random.nextInt(this.peers.length)];
+        return size + "_" + value + "_" + peer + extension;
     }
 }

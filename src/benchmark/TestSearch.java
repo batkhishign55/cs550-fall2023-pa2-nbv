@@ -1,6 +1,5 @@
 package src.benchmark;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -62,7 +61,7 @@ public class TestSearch {
         long startTime = System.nanoTime();
 
         // establish a connection
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 1; i++) {
             this.sendRequest();
         }
         // record end time
@@ -82,7 +81,6 @@ public class TestSearch {
 
         Socket socket = null;
         DataOutputStream out = null;
-        DataInputStream in = null;
 
         try {
 
@@ -112,27 +110,10 @@ public class TestSearch {
                 out.writeUTF(prop.getProperty("id"));
             }
 
-            socket = new Socket(this.prop.getProperty("cis_address"), 8080);
-            in = new DataInputStream(socket.getInputStream());
-            out = new DataOutputStream(socket.getOutputStream());
-
-            // send request type
-            out.writeUTF("search");
-
-            // send fileName
-            out.writeUTF(getRandomFilename());
-            String msg = in.readUTF();
-            // reads peers from cis until "end" is sent
-            while (!msg.equals("end")) {
-                System.out.println(msg);
-                msg = in.readUTF();
-            }
-
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
-                in.close();
                 out.close();
                 socket.close();
             } catch (IOException e) {

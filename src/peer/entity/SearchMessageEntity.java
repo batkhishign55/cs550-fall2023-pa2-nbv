@@ -8,6 +8,7 @@ public class SearchMessageEntity {
     private int upstreamPort;
     private String fileName;
     private boolean isOrigin;
+    private boolean didRespond;
 
     public String getUpstreamId() {
         return this.upstreamId;
@@ -23,6 +24,7 @@ public class SearchMessageEntity {
 
     public SearchMessageEntity(String msgId) {
         this.msgId = msgId;
+        this.didRespond = false;
     }
 
     public String getMsgId() {
@@ -53,11 +55,15 @@ public class SearchMessageEntity {
         this.fileName = fileName;
     }
 
-    public boolean isIsOrigin() {
+    public boolean getIsOrigin() {
         return this.isOrigin;
     }
 
-    public boolean getIsOrigin() {
-        return this.isOrigin;
+    public boolean getDidRespond() {
+        return this.didRespond;
+    }
+
+    public void setDidRespond(boolean didRespond) {
+        this.didRespond = didRespond;
     }
 }
