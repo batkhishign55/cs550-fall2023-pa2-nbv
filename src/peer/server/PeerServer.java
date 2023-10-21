@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import src.peer.PeerMain;
 
@@ -26,6 +28,8 @@ public class PeerServer extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        ExecutorService executor = Executors.newFixedThreadPool(12);
         // starts server and waits for a connection
         while (true) {
             try {
@@ -35,8 +39,12 @@ public class PeerServer extends Thread {
                 DataInputStream in = new DataInputStream(socket.getInputStream());
                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-                Thread clientThread = new PeerClientHandler(peerMain, socket, in, out);
-                clientThread.start();
+                Runnable clientThread = new PeerClientHandler(peerMain, socket, in, out);
+                executor.execute(clientThread);
+                // Thread clientThread = new PeerClientHandler(peerMain, socket, in, out);
+                // clientThread.start();
+
+                // executor.shutdown();
 
             } catch (IOException i) {
                 System.out.println(i);

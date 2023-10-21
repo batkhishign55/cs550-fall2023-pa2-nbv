@@ -2,9 +2,12 @@ package src.peer;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import src.peer.client.PeerClient;
 import src.peer.entity.AddressEntity;
@@ -16,11 +19,13 @@ import src.peer.server.PeerServer;
 public class PeerMain {
 
     ArrayList<SearchMessageEntity> msgs = new ArrayList<>();
-    public static final Object lock = new Object();
+    public static final Object lock1 = new Object();
+    public static final Object lock2 = new Object();
+    public static final Object lock3 = new Object();
     ArrayList<PeerEntity> peers = new ArrayList<>();
     ArrayList<FileHolderEntity> holders = new ArrayList<>();
     Properties prop;
-    static int testSize = 1000;
+    static int testSize = 10000;
     int testReceived;
     long startTime;
 
@@ -29,38 +34,46 @@ public class PeerMain {
     }
 
     public void incrementTestReceived() {
-        synchronized (lock) {
+        synchronized (lock1) {
             this.testReceived += 1;
-            if (this.testReceived == PeerMain.testSize) {
-                this.testReceived = 0;
+            if (this.testReceived > PeerMain.testSize * 0.95) {
+                this.endTest();
             }
         }
     }
 
     public void startTest() {
-        synchronized (lock) {
+        synchronized (lock1) {
             this.testReceived = 0;
             startTime = System.nanoTime();
         }
     }
 
     public void endTest() {
-        synchronized (lock) {
+        synchronized (lock1) {
             this.testReceived = 0;
             long elapsedTimeMillis = (System.nanoTime() - startTime) / 1000000;
 
-            System.out.println("Total Time Taken: " + elapsedTimeMillis + "ms");
+            String res = "Total Time Taken: " + elapsedTimeMillis + "ms";
+            System.out.println(res);
+            try (FileOutputStream outputStream = new FileOutputStream("./test_res.txt")) {
+                byte[] strToBytes = res.getBytes();
+                outputStream.write(strToBytes);
+                outputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     public ArrayList<SearchMessageEntity> getMsgs() {
-        synchronized (lock) {
+        synchronized (lock2) {
             return this.msgs;
         }
     }
 
     public SearchMessageEntity findMsg(String msgId) throws Exception {
-        synchronized (lock) {
+        synchronized (lock2) {
             for (SearchMessageEntity msg : this.msgs) {
                 if (msgId.equals(msg.getMsgId())) {
                     return msg;
@@ -71,23 +84,24 @@ public class PeerMain {
     }
 
     public void addMsg(SearchMessageEntity msg) {
-        synchronized (lock) {
+        synchronized (lock2) {
             // clear the messages if it's over 1k
-            if (this.msgs.size() > 1000) {
-                this.msgs = new ArrayList<>();
+            if (this.msgs.size() > 10001) {
+                System.out.println("clearing msgs.");
+                this.msgs.clear();
             }
             this.msgs.add(msg);
         }
     }
 
     public ArrayList<FileHolderEntity> getHolders() {
-        synchronized (lock) {
+        synchronized (lock3) {
             return this.holders;
         }
     }
 
     public FileHolderEntity findHolder(String fileName) throws Exception {
-        synchronized (lock) {
+        synchronized (lock3) {
             for (FileHolderEntity holder : this.holders) {
                 if (holder.getFileName().equals(fileName)) {
                     return holder;
@@ -98,7 +112,10 @@ public class PeerMain {
     }
 
     public void addHolder(String fileName, String ip, int port) {
-        synchronized (lock) {
+        synchronized (lock3) {
+            if (this.holders.size() > 50) {
+                this.holders.clear();
+            }
 
             int idx = -1;
             for (int i = 0; i < this.holders.size(); i++) {
@@ -131,26 +148,20 @@ public class PeerMain {
     }
 
     public ArrayList<PeerEntity> getPeers() {
-        synchronized (lock) {
-            return this.peers;
-        }
+        return this.peers;
     }
 
     public PeerEntity findPeer(String peerId) throws Exception {
-        synchronized (lock) {
-            for (PeerEntity peer : this.peers) {
-                if (peer.getId().equals(peerId)) {
-                    return peer;
-                }
+        for (PeerEntity peer : this.peers) {
+            if (peer.getId().equals(peerId)) {
+                return peer;
             }
-            throw new Exception("Peer not found!");
         }
+        throw new Exception("Peer not found!");
     }
 
     public Properties getProp() {
-        synchronized (lock) {
-            return this.prop;
-        }
+        return this.prop;
     }
 
     public PeerMain() {
@@ -178,10 +189,11 @@ public class PeerMain {
             System.out.println("No peers found in the configuration file.");
         }
 
-        Thread clientThread = new PeerClient(this);
-        clientThread.start();
-        Thread serverThread = new PeerServer(this);
-        serverThread.start();
+        ExecutorService executor = Executors.newFixedThreadPool(15);
+        Runnable clientThread = new PeerClient(this);
+        executor.execute(clientThread);
+        Runnable serverThread = new PeerServer(this);
+        executor.execute(serverThread);
     }
 
     public static void main(String args[]) {

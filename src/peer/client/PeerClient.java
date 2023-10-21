@@ -38,9 +38,10 @@ public class PeerClient extends Thread {
     public void run() {
 
         int idx = 0;
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 16; i++) {
             String peerId = String.format("peer%d", i + 1);
             if (!peerMain.getProp().getProperty("id").equals(peerId)) {
+                System.out.println(peerId);
                 this.peers[idx] = peerId;
                 idx += 1;
             }
@@ -276,11 +277,11 @@ public class PeerClient extends Thread {
     }
 
     private static final String[] sizes = { "10KB", "100MB" };
-    private static final int[] sizeLimits = { 10, 10 };
+    private static final int[] sizeLimits = { 100000, 10 };
     private static final Random random = new Random();
     private int testType;
     private int fileSize;
-    private String[] peers = new String[2];
+    private String[] peers = new String[15];
 
     private String getRandomFilename() {
         String size = sizes[this.fileSize];

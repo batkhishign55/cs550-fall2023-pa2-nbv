@@ -69,6 +69,7 @@ public class PeerClientHandler extends Thread {
                 if (out != null) {
                     out.close();
                 }
+                peerMain = null;
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -158,6 +159,16 @@ public class PeerClientHandler extends Thread {
             out.writeUTF(fileName);
             // send current peerId
             out.writeUTF(peerMain.getProp().getProperty("id"));
+
+            if (socket != null) {
+                socket.close();
+            }
+            if (in != null) {
+                in.close();
+            }
+            if (out != null) {
+                out.close();
+            }
         }
     }
 
